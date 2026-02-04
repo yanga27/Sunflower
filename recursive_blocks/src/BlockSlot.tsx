@@ -157,10 +157,6 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockI
 		<div
 			ref={dropRef}
 			className={`block-slot ${slot.block ? "filled" : "empty"} ${highlightedBlockId === slot.block?.id ? "block-highlighted" : ""}`} 
-			onClick={(e) => {
-				e.stopPropagation(); // prevents parent blocks from being selected
-				if (slot.block) onSelectBlock(slot.block.id); // set selected block
-			}}
 			>
 			<Block 
 				key={slot.block?.id ?? `empty-${parentBlock ? parentBlock.id : "root"}-${slot.name}`}

@@ -62,10 +62,12 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
         backgroundColor: getDepthColor(block.depth || 0),
         borderLeft: `5px solid ${getDepthColor(block.depth || 0)}`
       }}
+
       onClick={(e) => {
-        e.stopPropagation(); // prevent parent selection
+        // Stop propagation first to prevent parent blocks from handling this
+        e.stopPropagation();
         if (onSelectBlock && block) {
-          onSelectBlock(block.id); // update selectedBlockId
+          onSelectBlock(block.id);
         }
       }}
     >
@@ -115,7 +117,7 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
 
       <div className="slots-container">
         {block.children.map((slot) => (
-          <div key={`${block.id}-${slot.name}`}><BlockSlotDisplay parentBlock={block} slot={slot} onUpdate={onUpdate} highlightedBlockId={highlightedBlockId} onSelectBlock={onSelectBlock} /></div>
+          <div key={`${block.id}-${slot.name}`}><BlockSlotDisplay parentBlock={block} slot={slot} onUpdate={onUpdate} highlightedBlockId={highlightedBlockId} selectedBlockId={selectedBlockId} onSelectBlock={onSelectBlock} /></div>
         ))}
       </div>
 
