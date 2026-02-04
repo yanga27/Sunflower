@@ -2,7 +2,7 @@ import React from "react";
 import { useDrag } from "react-dnd";
 import { BlockData } from "./BlockUtil";
 import './Block.css';
-import { blockConfig, BlockSlot, BlockType } from "./BlockConfig";
+import { blockConfig, BlockSlot, BlockType } from "./BlockConfig"; 
 import { ValueEditor } from "./ValueEditor";
 import { BlockSlotDisplay } from "./BlockSlot";
 
@@ -10,6 +10,8 @@ interface Props {
   block: BlockData | null;
   onUpdate: (newBlock: BlockData | null) => void;
   highlightedBlockId?: string | null;
+  selectedBlockId?: string | null; 
+  onSelectBlock: (id: string) => void;
 }
 
 const getDepthColor = (depth: number) => {
@@ -25,7 +27,7 @@ onUpdate is a function that gets called when this block is modified
 (meaning it is deleted, a value is modified, or an ancestor is modified)
 and replaces the old block with the new block.
 */
-export function Block({ block, onUpdate, highlightedBlockId }: Props) {
+export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, onSelectBlock }: Props) { 
   const [collapsed, setCollapsed] = React.useState(block?.collapsed);
   const [showInfo, setShowInfo] = React.useState(false);
 
@@ -51,12 +53,20 @@ export function Block({ block, onUpdate, highlightedBlockId }: Props) {
 
   return (
     <div 
-      className={`block-container ${highlightedBlockId === block.id ? "block-highlighted" : ""}`}
+      className={`block-container
+        ${highlightedBlockId === block.id ? "block-highlighted" : ""} 
+        ${selectedBlockId === block.id ? "selected-block" : ""}`}
       ref={dragRef}
       style={{ 
         opacity: isDragging ? 0.5 : 1, 
         backgroundColor: getDepthColor(block.depth || 0),
         borderLeft: `5px solid ${getDepthColor(block.depth || 0)}`
+      }}
+      onClick={(e) => {
+        e.stopPropagation(); // prevent parent selection
+        if (onSelectBlock && block) {
+          onSelectBlock(block.id); // update selectedBlockId
+        }
       }}
     >
       <div className="block-header" style={{ gap: "0.25rem" }}>
@@ -105,7 +115,7 @@ export function Block({ block, onUpdate, highlightedBlockId }: Props) {
 
       <div className="slots-container">
         {block.children.map((slot) => (
-          <div key={`${block.id}-${slot.name}`}><BlockSlotDisplay parentBlock={block} slot={slot} onUpdate={onUpdate} highlightedBlockId={highlightedBlockId} /></div>
+          <div key={`${block.id}-${slot.name}`}><BlockSlotDisplay parentBlock={block} slot={slot} onUpdate={onUpdate} highlightedBlockId={highlightedBlockId} onSelectBlock={onSelectBlock} /></div>
         ))}
       </div>
 

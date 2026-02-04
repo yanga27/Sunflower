@@ -46,7 +46,9 @@
     margin-top: 0.75rem;
     cursor: grab;
     transition: background-color 0.5s ease-in-out;
-
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   /* Block header (type and remove button) */
@@ -61,6 +63,14 @@
     font-weight: bold;
     color: black;
     font-size: 0.875rem;
+  }
+
+  /* Highlight the selected or currently active block */
+  .selected-block {
+    outline: 3px solid #FF6D26; 
+    outline-offset: -3px;        
+    box-shadow: 0 0 10px rgba(255, 109, 38, 0.5); 
+    transition: box-shadow 0.2s ease, outline 0.2s ease;
   }
 
   .collapse-button {
