@@ -36,6 +36,26 @@ export function BlockEditor() {
   const stepQueue = useRef<(() => Promise<void>)[]>([]);
   const isStepping = useRef(false);
   const loadInputRef = useRef<HTMLInputElement>(null);
+  const breakpointsRef = useRef<Set<string>>(new Set());
+
+  // Every time the root block changes, rebuild the set of breakpoints (this keeps it dynamic)
+  useEffect(() => {
+    const newBreakpoints = new Set<string>();
+    const traverse = (b: BlockData) => {
+      if (b.hasBreakpoint) {
+        newBreakpoints.add(b.id);
+      }
+      for (const slot of b.children) {
+        if (slot.block) {
+          traverse(slot.block);
+        }
+      }
+    };
+    if (rootBlock) {
+      traverse(rootBlock);
+    }
+    breakpointsRef.current = newBreakpoints;
+  }, [rootBlock]);
 
   React.useEffect(() => {//This updates the root block when the number of inputs changes
     if (!rootBlock) return;
@@ -304,7 +324,7 @@ export function BlockEditor() {
         setCurrentResult(result);
 
         // breakpoint logic
-        if (block.hasBreakpoint && !ignoreBreakpointsRef.current) {
+        if (breakpointsRef.current.has(block.id) && !ignoreBreakpointsRef.current) {
           setPaused(true);
           await new Promise<void>(resolve => {
             pauseResolver.current = resolve;
