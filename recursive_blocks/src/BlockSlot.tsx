@@ -1,6 +1,6 @@
 import React from "react";
 import { v4 as uuidv4 } from 'uuid';
-import { BlockSlot, BlockType, INPUT_DESCRIPTORS } from "./BlockConfig";
+import { BlockSlot, BlockType } from "./BlockConfig";
 import { BlockData, getInputCountOfSlot, isDescendant, setInputCountOfBlock } from "./BlockUtil";
 import { blockConfig } from "./BlockConfig";
 import { Block, getDefaultChildren, getDefaultValues } from "./Block";
@@ -16,7 +16,15 @@ slot is the slot data type (slot name, block inside, input descriptor, and input
 onUpdate is a function that is called when the block inside the slot is modified, it replaces the block inside with the new block.
 highlightedBlockId is the optional ID of the block that should be highlighted (for stepping through evaluation).
 */
-export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockId}: {parentBlock: BlockData | null, slot: BlockSlot, onUpdate: (newBlock: BlockData | null) => void, highlightedBlockId?: string | null}) {
+
+export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockId, selectedBlockId, onSelectBlock}: {
+  parentBlock: BlockData | null, 
+  slot: BlockSlot, 
+  onUpdate: (newBlock: BlockData | null) => void, 
+  highlightedBlockId?: string | null, 
+  selectedBlockId?: string | null,
+  onSelectBlock: (id: string) => void 
+}) { 
 	const { name, block: child } = slot;
 
     React.useEffect(() => {
@@ -146,21 +154,25 @@ export function BlockSlotDisplay({parentBlock, slot, onUpdate, highlightedBlockI
 	}
     
     return (
-      <div ref={dropRef} className={`block-slot ${child ? "filled" : "empty"}`}>
-        <strong>{name} ({INPUT_DESCRIPTORS[slot.input_descriptor_index](getInputCountOfSlot(slot, parentBlock ? parentBlock.inputCount : child ? child.inputCount : 0))}):</strong>
-				<Block 
-					key={child?.id ?? `empty-${parentBlock ? parentBlock.id : "root"}-${name}`}
-					block={child}
-					onUpdate={(newChild) => {
-						if (parentBlock === null) {
-								onUpdate(newChild);
-								return;
-						}
-						const updated = replaceSlotBlock(parentBlock, name, newChild === null ? null : newChild);
-						onUpdate(updated);
-					}}
-					highlightedBlockId={highlightedBlockId}
-				/>
-      </div>
-    );
+		<div
+			ref={dropRef}
+			className={`block-slot ${slot.block ? "filled" : "empty"} ${highlightedBlockId === slot.block?.id ? "block-highlighted" : ""}`} 
+			>
+			<Block 
+				key={slot.block?.id ?? `empty-${parentBlock ? parentBlock.id : "root"}-${slot.name}`}
+				block={slot.block}
+				onUpdate={(newChild) => {
+				if (parentBlock === null) {
+					onUpdate(newChild);
+					return;
+				}
+				const updated = replaceSlotBlock(parentBlock, slot.name, newChild === null ? null : newChild);
+				onUpdate(updated);
+				}}
+				highlightedBlockId={highlightedBlockId}
+				selectedBlockId={selectedBlockId} 
+				onSelectBlock={onSelectBlock} // pass down selection
+			/>
+		</div>
+  	);
   };

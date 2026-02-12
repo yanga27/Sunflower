@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { } from "react";
 import './Toolbar.css';
 
 interface ToolbarProps {
@@ -35,79 +35,97 @@ export function Toolbar({
   speedToText,
   currentResult
 }: ToolbarProps) {
-  const [openMenu, setOpenMenu] = useState<string | null>(null);
-
-  const toggleMenu = (menu: string) => {
-    setOpenMenu(openMenu === menu ? null : menu);
-  };
-
-  const closeMenus = () => {
-    setOpenMenu(null);
-  };
-
+  
   return (
-    <div className="toolbar-container" onClick={closeMenus}>
-      <input
-        ref={loadInputRef}
+    <>
+      <div className="toolbar-container">
+        <input
+          ref={loadInputRef}
+          id="load-input"
+          type="file"
+          accept=".bramflower,application/octet-stream"
+          onChange={onLoad}
+          className="hidden"
+        />
 
-        id="load-input"
-        type="file"
-        accept=".bramflower,application/octet-stream"
-        onChange={(e) => { onLoad(e); closeMenus(); }}
-        className="hidden"
-      />
+        <img src="src/assets/logo.svg" alt="Sunflower" className="logo"/>
+        
+        {/* File operation buttons */}
+        <div className="toolbar-section">
+          <button onClick={onSave} className="toolbar-button" title="Save (Ctrl+Shift+S)">
+            Save
+          </button>
+          <button
+            className="toolbar-button"
+            onClick={() => loadInputRef.current?.click()}
+            title="Load (Ctrl+O)" 
+          >
+            Load
+          </button>
+        </div>
 
-      <img src="src/assets/logo.svg" alt="Sunflower" className="logo"/>
-      
-      {/* File Menu */}
-      <div className="menu-wrapper">
-        <button 
-          className="menu-button"
-          onClick={(e) => { e.stopPropagation(); toggleMenu('file'); }}
-        >
-          File ▼
-        </button>
-        {openMenu === 'file' && (
-          <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => { onSave(); closeMenus(); }} className="menu-item">
-              Save
-            </button>
-            <label htmlFor="load-input" className="menu-item menu-item-label">
-              Load
-            </label>
-          </div>
-        )}
+        {/* Divider between button groups */}
+        <div className="toolbar-divider"></div>
+
+        {/* Program operation buttons */}
+        <div className="toolbar-section">
+          <button onClick={onRun} className="toolbar-button run-button" title="Run program">
+            ▶️ Run
+          </button>
+          <button onClick={onStep} className="toolbar-button step-button" title="Step through program">
+            ⏩ Step
+          </button>
+          <button onClick={onHalt} className="toolbar-button halt-button" title="Halt execution">
+            ⏹️ Halt
+          </button>
+        </div>
+
+        <div className="toolbar-divider"></div>
+
+        {/* Inline settings controls */}
+        <div className="toolbar-section">
+          <label className="toolbar-label">Inputs:</label>
+          <input
+            type="number"
+            min="0"
+            max="20"
+            step="1"
+            value={inputCount.toString()}
+            onChange={(e) => onInputCountChange(parseInt(e.target.value))}
+            className="toolbar-input"
+          />
+        </div>
+
+        <div className="toolbar-section">
+          <label className="toolbar-label">Speed:</label>
+          <input
+            type="range"
+            min="0"
+            max="2"
+            step="1"
+            value={evaluationSpeed}
+            onChange={(e) => onEvaluationSpeedChange(parseInt(e.target.value))}
+            className="toolbar-slider"
+          />
+          <span className="toolbar-value">{speedToText(evaluationSpeed)}</span>
+        </div>
+
+        {/* Result display at the end of toolbar */}
+        <div className="toolbar-section result-section">
+          <label className="toolbar-label">Result:</label>
+          <span className="result-value">{currentResult ?? '—'}</span>
+        </div>
+
+
       </div>
 
-      {/* Program Settings Menu */}
-      <div className="menu-wrapper">
-        <button 
-          className="menu-button"
-          onClick={(e) => { e.stopPropagation(); toggleMenu('settings'); }}
-        >
-          Program Settings ▼
-        </button>
-        {openMenu === 'settings' && (
-          <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
-            <div className="menu-item">
-              <label>Number of Inputs:</label>
-              <input
-                type="number"
-                min="0"
-                max="20"
-                step="1"
-                value={inputCount.toString()}
-                onChange={
-                  (e) => onInputCountChange(parseInt(e.target.value))
-                }
-                className="menu-input"
-              />
-            </div>
-
-            <div className="menu-divider"></div>
-
-            <div className="menu-item">
-              <label>Inputs:</label>
+      {/* Settings panel */}
+      <div className="settings-panel">
+          <div className="settings-content">
+            
+            {/* Input values grid */}
+            <div className="settings-group">
+              <label className="settings-label">Input Values:</label>
               <div className="inputs-grid">
                 {inputs.map((val, i) => (
                   <div key={i} className="input-item">
@@ -119,61 +137,14 @@ export function Toolbar({
                       step="1"
                       onChange={(e) => onInputChange(i, parseFloat(e.target.value))}
                       placeholder={`x${i + 1}`}
-                      className="menu-input"
+                      className="settings-input"
                     />
                   </div>
                 ))}
               </div>
             </div>
-
-            <div className="menu-divider"></div>
-
-            <div className="menu-item">
-              <label>Run Speed:</label>
-              <input
-                type="range"
-                min="0"
-                max="2"
-                step="1"
-                value={evaluationSpeed}
-                onChange={(e) => onEvaluationSpeedChange(parseInt(e.target.value))}
-                className="menu-slider"
-              />
-              <span className="slider-value">{speedToText(evaluationSpeed)}</span>
-            </div>
           </div>
-        )}
-      </div>
-
-      {/* Program Operations Menu */}
-      <div className="menu-wrapper">
-        <button 
-          className="menu-button"
-          onClick={(e) => { e.stopPropagation(); toggleMenu('operations'); }}
-        >
-          Program Operations ▼
-        </button>
-        {openMenu === 'operations' && (
-          <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => { onRun(); closeMenus(); }} className="menu-item evaluate-button-menu">
-              Run
-            </button>
-            <button onClick={() => { onHalt(); closeMenus(); }} className="menu-item halt-button-menu">
-              Halt
-            </button>
-            <button onClick={() => { onStep(); closeMenus(); }} className="menu-item step-button-menu">
-              Step
-            </button>
-          </div>
-        )}
-      </div>
-      
-      {/* Result Display */}
-      <div className="toolbar-group">
-        <div className="result">
-          <p>Result: {currentResult}</p>
         </div>
-      </div>
-    </div>
+    </>
   );
 }

@@ -6,6 +6,8 @@ import { BlockSave, deserializeBlock, serializeBlock } from "./BlockSave";
 import { useBlockEditor } from "./BlockEditorContext";
 import { BlockSlotDisplay } from "./BlockSlot";
 import { BlockPalette } from "./BlockPalette";
+import { removeBlockById } from "./BlockUtil";
+
 
 export interface EditorSaveState {
   fileType: string;
@@ -26,6 +28,8 @@ export function BlockEditor() {
   const { inputCount, setInputCount, rootBlock, setRootBlock, customBlockCount: _customBlockCount, setCustomBlockCount } = useBlockEditor();
   const [inputs, setInputs] = useState<number[]>(new Array(inputCount > 0 ? inputCount : 0).fill(0));
   const [highlightedBlockId, setHighlightedBlockId] = useState<string | null>(null);
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+
   const [currentResult, setCurrentResult] = useState<number | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [evaluationSpeed, setEvaluationSpeed] = useState<number>(2);
@@ -76,6 +80,24 @@ export function BlockEditor() {
     createSaveFile(rootBlock ? serializeBlock(rootBlock) : undefined, inputs, inputCount > 0 ? inputCount : 0);
   }, [rootBlock, inputs, inputCount]);
 
+  const handleDeleteSelectedBlock = useCallback(() => {
+    if (!rootBlock || !selectedBlockId) return;
+
+    if (rootBlock.id === selectedBlockId) {
+      setRootBlock(null);
+      setSelectedBlockId(null);
+      setHighlightedBlockId(null);
+      return;
+    }
+
+    const newRoot = removeBlockById(rootBlock, selectedBlockId);
+    checkForErrors(newRoot);
+    setRootBlock(newRoot);
+    setSelectedBlockId(null);
+    setHighlightedBlockId(null);
+  }, [rootBlock, selectedBlockId]);
+
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       const isMac = navigator.platform.toUpperCase().includes("MAC");
@@ -86,6 +108,12 @@ export function BlockEditor() {
         document.activeElement instanceof HTMLInputElement ||
         document.activeElement instanceof HTMLTextAreaElement
       ) return;
+
+      // Delete block --> Backspace or Delete
+      if ((e.key === "Backspace" || e.key === "Delete") && selectedBlockId) {
+        e.preventDefault();
+        handleDeleteSelectedBlock();
+      }
 
       // Save --> Ctrl+Shift+S
       if (ctrl && e.shiftKey && e.key.toLowerCase() === "s") {
@@ -102,7 +130,7 @@ export function BlockEditor() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleSave]);
+  }, [handleSave, selectedBlockId, handleDeleteSelectedBlock]); 
 
   function createSaveFile(rootBlock: BlockSave | undefined, inputs: number[], inputCount: number) {
     const now = new Date();
@@ -335,6 +363,8 @@ export function BlockEditor() {
               setRootBlock(block);
             }}
             highlightedBlockId={highlightedBlockId}
+            selectedBlockId={selectedBlockId}
+            onSelectBlock={(id) => setSelectedBlockId(id)}
           />
         </div>
       </div>
