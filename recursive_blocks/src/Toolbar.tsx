@@ -6,8 +6,11 @@ interface ToolbarProps {
   onLoad: (event: React.ChangeEvent<HTMLInputElement>) => void;
   loadInputRef: React.RefObject<HTMLInputElement | null>;
   onRun: () => void;
+  onRunIgnoreBreakpoints: () => void;
   onHalt: () => void;
   onStep: () => void;
+  onResume: () => void;
+  paused: boolean;
   inputCount: number;
   onInputCountChange: (count: number) => void;
   inputs: number[];
@@ -23,9 +26,12 @@ export function Toolbar({
   onSave, 
   onLoad,
   loadInputRef, 
-  onRun, 
+  onRun,
+  onRunIgnoreBreakpoints,
   onHalt, 
   onStep,
+  onResume,
+  paused,
   inputCount,
   onInputCountChange,
   inputs,
@@ -144,6 +150,45 @@ export function Toolbar({
               </div>
             </div>
           </div>
+        )}
+      </div>
+
+      {/* Program Operations Menu */}
+      <div className="menu-wrapper">
+        <button 
+          className="menu-button"
+          onClick={(e) => { e.stopPropagation(); toggleMenu('operations'); }}
+        >
+          Program Operations ▼
+        </button>
+        {openMenu === 'operations' && (
+          <div className="dropdown-menu" onClick={(e) => e.stopPropagation()}>
+            {paused ? (
+              <button onClick={() => { onResume(); closeMenus(); }} className="menu-item evaluate-button-menu">
+                Resume
+              </button>
+            ) : (
+              <button onClick={() => { onRun(); closeMenus(); }} className="menu-item evaluate-button-menu">
+                Run
+              </button>
+            )}
+            <button onClick={() => { onRunIgnoreBreakpoints(); closeMenus(); }} className="menu-item">
+              Run (Ignore Breakpoints)
+            </button>
+            <button onClick={() => { onHalt(); closeMenus(); }} className="menu-item halt-button-menu">
+              Halt
+            </button>
+            <button onClick={() => { onStep(); closeMenus(); }} className="menu-item step-button-menu">
+              Step
+            </button>
+          </div>
+        )}
+      </div>
+      
+      {/* Result Display */}
+      <div className="toolbar-group">
+        <div className="result">
+          <p>Result: {currentResult}</p>
         </div>
     </>
   );

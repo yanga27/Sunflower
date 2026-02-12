@@ -78,9 +78,6 @@ export const blockConfig: Record<BlockType, {
     evaluate: (_block, _inputs, _evaluate, onStepCallback) => {
       // Zero block always returns 0
       const result = 0;
-      if (onStepCallback) {
-        onStepCallback(_block, result);
-      }
       return result;
     },
     checkForErrors: (_block) => {
@@ -100,9 +97,6 @@ export const blockConfig: Record<BlockType, {
         throw new Error("Successor block requires exactly one input.");
       }
       const result = inputs[0] + 1;
-      if (onStepCallback) {
-        onStepCallback(_block, result);
-      }
       return result;
     },
     checkForErrors: (block) => {
@@ -129,9 +123,6 @@ export const blockConfig: Record<BlockType, {
       }
       const i = block.num_values[0].value ?? 0;
       const result = inputs[i-1];
-      if (onStepCallback) {
-        onStepCallback(block, result);
-      }
       return result;
     },
     checkForErrors: (block) => {
@@ -169,9 +160,6 @@ export const blockConfig: Record<BlockType, {
         g_results.push(await evaluate(g_block, inputs, evaluate, onStepCallback));
       }
       const result = await evaluate(block.children[0].block!, g_results, evaluate, onStepCallback);
-      if (onStepCallback) {
-        await onStepCallback(block, result);
-      }
       return result;
     },
     dynamicChildren: (block: BlockData) => {
@@ -212,9 +200,6 @@ export const blockConfig: Record<BlockType, {
       if (inputs[inputs.length - 1] <= 0) {
         // Base case: if the last input is 0, evaluate the base case block
         const result = await evaluate(block.children[0].block!, inputs.slice(0, -1), evaluate, onStepCallback);
-        if (onStepCallback) {
-          await onStepCallback(block, result);
-        }
         return result;
       } else {
         // Recursive case: evaluate the recursive case block with the inputs
@@ -223,9 +208,6 @@ export const blockConfig: Record<BlockType, {
         const intermediateResult = await evaluate(block, inputs_decremented, evaluate, onStepCallback);
         const inputs_combined_with_previous = inputs_decremented.concat(intermediateResult);
         const result = await evaluate(block.children[1].block!, inputs_combined_with_previous, evaluate, onStepCallback);
-        if (onStepCallback) {
-          await onStepCallback(block, result);
-        }
         return result;
       }
     },
@@ -257,9 +239,6 @@ export const blockConfig: Record<BlockType, {
       while (depth < MAX_DEPTH) {
         const result = await evaluate(f_block, inputs.concat(n), evaluate, onStepCallback);
         if (result === 0) {
-          if (onStepCallback) {
-            await onStepCallback(block, n);
-          }
           return n;
         }
         n++;
@@ -282,9 +261,6 @@ export const blockConfig: Record<BlockType, {
       // Custom block evaluation logic
       if (block.children[0].block) {
         const result = await evaluate(block.children[0].block, inputs, evaluate, onStepCallback);
-        if (onStepCallback) {
-          await onStepCallback(block, result);
-        }
         return result;
       }
       throw new Error("Custom block is empty.");

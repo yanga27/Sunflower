@@ -72,6 +72,16 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
       }}
     >
       <div className="block-header" style={{ gap: "0.25rem" }}>
+        <button 
+          className="breakpoint-button"
+          onClick={() => {
+            onUpdate({ ...block, hasBreakpoint: !block.hasBreakpoint });
+          }}
+          title="Toggle Breakpoint"
+          style={{ color: block.hasBreakpoint ? "red" : "#ccc", border: "none", background: "none", cursor: "pointer", fontSize: "1.2em", padding: "0 0.2rem" }}
+        >
+          {block.hasBreakpoint ? "\u25CF" : "\u25CB"}
+        </button>
         <div className="block-type">{block.name || block.type.toUpperCase()}</div>
         <div className="block-error-list">
           {block.errors.map((error, index) => (

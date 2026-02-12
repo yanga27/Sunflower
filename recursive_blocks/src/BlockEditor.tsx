@@ -33,10 +33,32 @@ export function BlockEditor() {
   const [currentResult, setCurrentResult] = useState<number | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [evaluationSpeed, setEvaluationSpeed] = useState<number>(2);
-  const isHaltedRef = useRef(false);
-  const stepQueue = useRef<(() => Promise<void>)[]>([]);
-  const isStepping = useRef(false);
+  const [paused, setPaused] = useState(false);
   const loadInputRef = useRef<HTMLInputElement>(null);
+  const pauseResolver = useRef<((value: void | PromiseLike<void>) => void) | null>(null);
+  const isHaltedRef = useRef(false);
+  const pauseAtNextStepRef = useRef(false);
+  const breakpointsRef = useRef<Set<string>>(new Set());
+  const ignoreBreakpointsRef = useRef(false);
+
+  // Every time the root block changes, rebuild the set of breakpoints (this keeps it dynamic)
+  useEffect(() => {
+    const newBreakpoints = new Set<string>();
+    const traverse = (b: BlockData) => {
+      if (b.hasBreakpoint) {
+        newBreakpoints.add(b.id);
+      }
+      for (const slot of b.children) {
+        if (slot.block) {
+          traverse(slot.block);
+        }
+      }
+    };
+    if (rootBlock) {
+      traverse(rootBlock);
+    }
+    breakpointsRef.current = newBreakpoints;
+  }, [rootBlock]);
 
   React.useEffect(() => {//This updates the root block when the number of inputs changes
     if (!rootBlock) return;
@@ -215,72 +237,59 @@ export function BlockEditor() {
     reader.readAsText(file);
   };
 
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
   const handleHalt = () => {
     isHaltedRef.current = true;
-    stepQueue.current = [];
-    isStepping.current = false;
+    pauseAtNextStepRef.current = false;
+    
+    // resolve any pending pause so execution can proceed to throw "halted"
+    if (pauseResolver.current) {
+      pauseResolver.current();
+      pauseResolver.current = null;
+    }
+    setPaused(false);
   };
   
-  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  const handleResume = () => {
+    if (pauseResolver.current) {
+      pauseResolver.current();
+      pauseResolver.current = null;
+      setPaused(false);
+    }
+  };
   
   const handleStep = async () => {
-    if (isEvaluating) return;
-  
-    if (!isStepping.current) {
-      // Start a new stepping session
-      isStepping.current = true;
-      isHaltedRef.current = false;
-      setCurrentResult(null);
-  
-      if (!rootBlock) {
-        alert("No root block to evaluate.");
-        isStepping.current = false;
-        return;
-      }
-  
-      const onStepCallback = async (block: BlockData, result: number) => {
-        return new Promise<void>((resolve) => {
-          stepQueue.current.push(async () => {
-            if (isHaltedRef.current) {
-              stepQueue.current = [];
-              isStepping.current = false;
-              setHighlightedBlockId(null);
-              resolve();
-              return;
-            }
-            setHighlightedBlockId(block.id);
-            setCurrentResult(result);
-            resolve();
-          });
-        });
-      };
-  
-      // Don't await this, it will populate the queue
-      stepBlock(rootBlock, inputs, onStepCallback).then(() => {
-        stepQueue.current.push(async () => {
-          setHighlightedBlockId(null);
-          isStepping.current = false;
-        });
-      });
-    }
-  
-    // Execute the next step in the queue
-    const nextStep = stepQueue.current.shift();
-    if (nextStep) {
-      await nextStep();
+    if (isEvaluating) {
+        if (paused) {
+            pauseAtNextStepRef.current = true;
+            handleResume();
+        } else {
+             // already running, so pause?
+             pauseAtNextStepRef.current = true; 
+        }
     } else {
-      isStepping.current = false;
-      setHighlightedBlockId(null);
+        // start new session
+        pauseAtNextStepRef.current = true;
+        handleRun();
     }
   };
 
-  const handleRun = async () => {
+  const handleRun = async (ignoreBreakpoints: boolean = false) => {
+    // if paused, handle the "Run (Ignore Breakpoints)" case
+    if (paused && ignoreBreakpoints) {
+      ignoreBreakpointsRef.current = true;
+      handleResume();
+      return;
+    }
+
+    // if not paused, continue as usual
     if (isEvaluating) return;
     setIsEvaluating(true);
-    isStepping.current = false;
-    stepQueue.current = [];
     isHaltedRef.current = false;
     setCurrentResult(null);
+    ignoreBreakpointsRef.current = ignoreBreakpoints;
+
     if (!rootBlock) {
       alert("No root block to evaluate.");
       setIsEvaluating(false);
@@ -295,29 +304,41 @@ export function BlockEditor() {
       };
       const delay = speedMap[evaluationSpeed];
 
-      if (delay === 0) {
-        // Instant evaluation
-        const result = await evaluateBlock(rootBlock, inputs);
+      // the callback function to be run after evaluation
+      const onStepCallback = async (block: BlockData, result: number) => {
+        if (isHaltedRef.current) throw new Error("Halted");
+
+        // update UI
+        setHighlightedBlockId(block.id);
         setCurrentResult(result);
-      } else {
-        // Step-by-step evaluation
-        const onStepCallback = async (block: BlockData, result: number) => {
-          if (isHaltedRef.current) {
-            throw new Error("Halted");
-          }
-          setHighlightedBlockId(block.id);
-          setCurrentResult(result);
-          await sleep(delay);
-        };
-        await stepBlock(rootBlock, inputs, onStepCallback);
-      }
-    } catch (error: any) {
-      if (error.message !== "Halted") {
-        alert(`Error: ${error.message}`);
+
+        // control flow: pause execution if there is a breakpoint or we are stepping
+        const shouldPause = (breakpointsRef.current.has(block.id) && !ignoreBreakpointsRef.current) || pauseAtNextStepRef.current;
+        if (shouldPause) {
+          setPaused(true);
+          pauseAtNextStepRef.current = false;
+          await new Promise<void>(resolve => {
+            pauseResolver.current = resolve;
+          });
+          setPaused(false);
+        }
+
+        // wait to simulate execution speed 
+        if (delay > 0) await sleep(delay);
+      };
+      // stepBlock will run evaluation, then handle the callback
+      await stepBlock(rootBlock, inputs, onStepCallback);
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message !== "Halted") {
+          alert(`Error: ${error.message}`);
+        }
       }
     } finally {
       setHighlightedBlockId(null);
       setIsEvaluating(false);
+      setPaused(false);
+      ignoreBreakpointsRef.current = false;
     }
   };
 
@@ -335,7 +356,10 @@ export function BlockEditor() {
 
         loadInputRef={loadInputRef}
 
-        onRun={handleRun}
+        onRun={() => handleRun(false)}
+        onRunIgnoreBreakpoints={() => handleRun(true)}
+        onResume={handleResume}
+        paused={paused}
         onHalt={handleHalt}
         onStep={handleStep}
         inputCount={inputCount}
