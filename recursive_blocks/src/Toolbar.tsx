@@ -16,6 +16,9 @@ interface ToolbarProps {
   onEvaluationSpeedChange: (speed: number) => void;
   speedToText: (speed: number) => string;
   currentResult: number | null;
+  // TEMP: Test data handlers
+  onAddTestData?: () => void;
+  onClearTestData?: () => void;
 }
 
 // JSX element to represent the toolbar, with functions to save, load, and evaluate.
@@ -33,7 +36,10 @@ export function Toolbar({
   evaluationSpeed,
   onEvaluationSpeedChange,
   speedToText,
-  currentResult
+  currentResult,
+  // TEMP: Test data handlers
+  onAddTestData,
+  onClearTestData
 }: ToolbarProps) {
   
   return (
@@ -77,6 +83,26 @@ export function Toolbar({
           </button>
           <button onClick={onHalt} className="toolbar-button halt-button" title="Halt execution">
             ⏹️ Halt
+          </button>
+        </div>
+
+        <div className="toolbar-divider"></div>
+
+        {/* TEMP: Test data buttons */}
+        <div className="toolbar-section">
+          <button 
+            onClick={onAddTestData} 
+            className="toolbar-button test-button"
+            title="Add random test data to all blocks"
+          >
+            🎲 Test Data
+          </button>
+          <button 
+            onClick={onClearTestData} 
+            className="toolbar-button clear-button"
+            title="Clear all test data from blocks"
+          >
+            🗑️ Clear
           </button>
         </div>
 

@@ -1,8 +1,6 @@
 import { blockConfig, BlockType, BlockEvaluator, BlockSlot } from "./BlockConfig";
 
-/*
-A custom data type that contains all the data for a block placed into the block tree.
-*/
+/* A custom data type that contains all the data for a block placed into the block tree. */
 export interface BlockData {
   id: string;
   name?: string; // For custom blocks
@@ -15,10 +13,12 @@ export interface BlockData {
   inputCount: number;
   depth: number;
   errors: string[];
+  latestInput?: number[]; // Latest execution input/output for visualization
+  latestOutput?: number;
 }
 
-//Currently unused.
-//Meant to be involved with moving blocks around.
+// Currently unused.
+// Meant to be involved with moving blocks around.
 export function removeBlockById(block: BlockData, targetId: string): BlockData {
   return {
     ...block,
@@ -33,7 +33,7 @@ export function removeBlockById(block: BlockData, targetId: string): BlockData {
   };
 }
 
-//Recursively checks if the parent has a descendant with id of childId
+// Recursively checks if the parent has a descendant with id of childId
 export function isDescendant(parent: BlockData, childId: string): boolean {
   for (const slot of parent.children) {
     if (!slot.block) continue;
@@ -43,10 +43,10 @@ export function isDescendant(parent: BlockData, childId: string): boolean {
   return false;
 }
 
-//Calls evaluate on the given block, starting with given inputs.
-//Each block type has an evaluate function, 
-//which takes in the blockdata, the inputs to evaluate on, 
-//and this evaluation function (to allow calling this function recursively)
+// Calls evaluate on the given block, starting with given inputs.
+// Each block type has an evaluate function, 
+// which takes in the blockdata, the inputs to evaluate on, 
+// and this evaluation function (to allow calling this function recursively)
 export async function evaluateBlock(
   block: BlockData,
   inputs: number[]
@@ -57,7 +57,7 @@ export async function evaluateBlock(
   return ev;
 }
 
-//Step through block evaluation with optional callback for visualization
+// Step through block evaluation with optional callback for visualization
 export async function stepBlock(
   block: BlockData,
   inputs: number[],
@@ -75,7 +75,7 @@ export async function stepBlock(
   return ev;
 }
 
-//Takes in a defaultCount, and modifies it using the slot's input modifiers to get the actual input count the slot wants.
+// Takes in a defaultCount, and modifies it using the slot's input modifiers to get the actual input count the slot wants.
 export function getInputCountOfSlot(
   slot: BlockSlot,
   defaultCount: number = 0
@@ -89,7 +89,7 @@ export function getInputCountOfSlot(
   return defaultCount;
 }
 
-//Recursively sets the input counts of blocks starting with setting the input block to have count inputs.
+// Recursively sets the input counts of blocks starting with setting the input block to have count inputs.
 export function setInputCountOfBlock(
   block: BlockData,
   count: number

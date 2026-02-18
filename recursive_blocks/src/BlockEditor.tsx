@@ -8,6 +8,9 @@ import { BlockSlotDisplay } from "./BlockSlot";
 import { BlockPalette } from "./BlockPalette";
 import { removeBlockById } from "./BlockUtil";
 
+// TEMP: Import test helper functions
+import { addGarbageTestData, clearExecutionData } from "./TEST_HELPER";
+
 
 export interface EditorSaveState {
   fileType: string;
@@ -119,6 +122,25 @@ export function BlockEditor() {
     setHighlightedBlockId(null);
   }, [rootBlock, selectedBlockId]);
 
+  // ADDED: Handler to add garbage test data to all blocks
+  const handleAddTestData = useCallback(() => {
+    if (!rootBlock) {
+      alert("No blocks to add test data to. Create some blocks first!");
+      return;
+    }
+    addGarbageTestData(rootBlock);
+    // Force React to re-render by creating a new reference
+    setRootBlock({ ...rootBlock });
+    console.log("Test data added to all blocks");
+  }, [rootBlock, setRootBlock]);
+
+  // ADDED: Handler to clear all execution data from blocks
+  const handleClearTestData = useCallback(() => {
+    if (!rootBlock) return;
+    clearExecutionData(rootBlock);
+    setRootBlock({ ...rootBlock });
+    console.log("Test data cleared from all blocks");
+  }, [rootBlock, setRootBlock]);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -370,6 +392,10 @@ export function BlockEditor() {
         onEvaluationSpeedChange={setEvaluationSpeed}
         speedToText={speedToText}
         currentResult={currentResult}
+        
+        // TEMP: Pass test data handlers to toolbar
+        onAddTestData={handleAddTestData}
+        onClearTestData={handleClearTestData}
       />
 
       <div className = "flexcont">

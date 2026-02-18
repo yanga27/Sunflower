@@ -57,12 +57,59 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0.5rem;
+    gap: 0.25rem;
   }
   
   .block-type {
     font-weight: bold;
     color: black;
     font-size: 0.875rem;
+  }
+
+  /* Input/Output display styles */
+  .block-io-display {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-left: auto;
+    margin-right: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.85rem;
+    font-family: 'Courier New', monospace;
+  }
+
+  .block-io-label {
+    font-weight: 600;
+    color: #333 !important;
+    font-size: 0.8rem;
+  }
+
+  .block-io-value {
+    font-weight: 600;
+    color: #333 !important;
+    min-width: 1.5rem;
+    text-align: center;
+  }
+
+  .block-io-separator {
+    color: #333 !important;
+    font-weight: bold;
+    margin: 0 0.2rem;
+  }
+
+  /* Dark mode adjustments for IO display */
+  @media (prefers-color-scheme: dark) {
+    .block-io-label {
+      color: #ccc;
+    }
+
+    .block-io-value {
+      color: #ccc;
+    }
+
+    .block-io-separator {
+      color: #ccc;
+    }
   }
 
   /* Highlight the selected or currently active block */
@@ -128,13 +175,6 @@
   .remove-button:hover {
     background-color: #fee2e2; /* red-100 */
     color: #b91c1c; /* red-700 */
-  }
-
-  .block-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.25rem;
   }
   
   /* Slots container */
@@ -436,5 +476,20 @@
 
   .value-input {
     font-size: 0.75rem;
+  }
+
+  /* Mobile responsive styles for IO display */
+  .block-io-display {
+    font-size: 0.7rem;
+    gap: 0.3rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .block-io-label {
+    font-size: 0.7rem;
+  }
+
+  .block-io-value {
+    min-width: 1rem;
   }
 }

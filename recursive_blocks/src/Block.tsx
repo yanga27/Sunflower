@@ -51,6 +51,16 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
   const dragRef = React.useRef<HTMLDivElement>(null);
   drag(dragRef);
 
+  // Format input/output for display
+  const formatInput = (input: number[] | undefined) => {
+    if (!input || input.length === 0) return '—';
+    return `(${input.join(', ')})`;
+  };
+
+  const formatOutput = (output: number | undefined) => {
+    return output !== undefined ? output.toString() : '—';
+  };
+
   return (
     <div 
       className={`block-container
@@ -83,6 +93,16 @@ export function Block({ block, onUpdate, highlightedBlockId, selectedBlockId, on
           {block.hasBreakpoint ? "\u25CF" : "\u25CB"}
         </button>
         <div className="block-type">{block.name || block.type.toUpperCase()}</div>
+        
+        {/* Input/Output display in header */}
+        <div className="block-io-display">
+          <span className="block-io-label">In:</span>
+          <span className="block-io-value">{formatInput(block.latestInput)}</span>
+          <span className="block-io-separator">→</span>
+          <span className="block-io-label">Out:</span>
+          <span className="block-io-value">{formatOutput(block.latestOutput)}</span>
+        </div>
+        
         <div className="block-error-list">
           {block.errors.map((error, index) => (
             <div key={index} className="block-error">
